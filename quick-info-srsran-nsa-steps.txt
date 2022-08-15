@@ -1,0 +1,326 @@
+Reference Link : https://docs.srsran.com/en/latest/app_notes/source/5g_nsa_zmq/source/index.html
+
+Topology
+=================================================================
+
+srsUE ---- srsEPC
+            |
+			|
+           srsENB 	---- Internet		
+
+Vagrant Machine
+=================================================================
+
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/bionic64"
+
+  config.vm.define :oai_gnb_ue_sim, autostart: false do |oai_gnb_ue_sim|
+    oai_gnb_ue_sim.vm.hostname = "oai-gnb-ue-sim"
+    oai_gnb_ue_sim.vm.network "private_network", ip: "192.168.62.154", nic_type: "82540EM"
+    oai_gnb_ue_sim.vm.network "private_network", ip: "192.168.130.52", nic_type: "82540EM"
+
+    oai_gnb_ue_sim.vm.provider "virtualbox" do |vb|
+      vb.name = "oai-gnb-ue-sim"
+      vb.linked_clone = true
+      vb.customize ["modifyvm", :id, "--memory", "6144"]
+      vb.customize ["modifyvm", :id, "--cpus", "4"]
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+  end
+end
+
+
+Steps to setup srsRAN
+=================================================================
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
+sudo apt-get install libzmq3-dev
+git clone https://github.com/srsRAN/srsRAN.git
+cd srsRAN/
+mkdir build
+cd build/
+cmake ../
+make
+sudo make install
+sudo ldconfig
+cd /home/vagrant
+mkdir .config
+cd .config/
+mkdir srsran
+cd srsran/
+wget https://docs.srsran.com/en/latest/_downloads/c4c658121d530b085c7f1e53083e1d6c/ue_example.conf
+mv ue_example.conf ue.conf
+wget https://docs.srsran.com/en/latest/_downloads/cbbeb9eed64bf03407cbb255828db3f5/enb_example.conf
+mv enb_example.conf enb.conf
+wget https://docs.srsran.com/en/latest/_downloads/cbbeb9eed64bf03407cbb255828db3f5/enb_example.conf
+wget https://docs.srsran.com/en/latest/_downloads/b9b7009b9fda34684668e48dbfcc4f7d/rr_example.conf
+mv rr_example.conf rr.conf
+rm enb_example.conf
+cp /home/vagrant/srsRAN/srsepc/user_db.csv.example ~/.config/srsran/user_db.csv
+cp /home/vagrant/srsRAN/srsepc/epc.conf.example ~/.config/srsran/epc.conf
+cp /home/vagrant/srsRAN/srsepc/mbms.conf.example ~/.config/srsran/mbms.conf
+cp /home/vagrant/srsRAN/srsenb/sib.conf.example ~/.config/srsran/sib.conf
+cp /home/vagrant/srsRAN/srsenb/rb.conf.example ~/.config/srsran/rb.conf
+cp /home/vagrant/srsRAN/srsenb/sib.conf.mbsfn.example ~/.config/srsran/sib.conf.mbsfn
+cd .config/srsran/
+
+sudo apt install iperf3
+
+
+Launch Commands
+=========================================================================
+Start with the following commands in 3 terminals
+-------------------------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ sudo srsepc
+vagrant@oai-gnb-ue-sim:~$ sudo srsenb
+vagrant@oai-gnb-ue-sim:~$ sudo srsue
+
+
+Give some time for X2 Handover and UE to get connected
+-------------------------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ iperf3 -s -i 1
+
+vagrant@oai-gnb-ue-sim:~$ sudo ip netns exec ue1 iperf3 -c 172.16.0.1 -b 10M -i 1 -t 60
+
+
+Logs
+=========================================================================
+
+srsEPC
+-------------------------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ sudo srsepc
+
+Built in Release mode using commit ce8a3cae1 on branch master.
+
+
+---  Software Radio Systems EPC  ---
+
+Couldn't open , trying /home/vagrant/.config/srsran/epc.conf
+Reading configuration file /home/vagrant/.config/srsran/epc.conf...
+Couldn't open user_db.csv, trying /home/vagrant/.config/srsran/user_db.csv
+HSS Initialized.
+MME S11 Initialized
+MME GTP-C Initialized
+MME Initialized. MCC: 0xf001, MNC: 0xff01
+SPGW GTP-U Initialized.
+SPGW S11 Initialized.
+SP-GW Initialized.
+Received S1 Setup Request.
+S1 Setup Request - eNB Name: srsenb01, eNB id: 0x19b
+S1 Setup Request - MCC:001, MNC:01
+S1 Setup Request - TAC 7, B-PLMN 0xf110
+S1 Setup Request - Paging DRX v128
+Sending S1 Setup Response
+Initial UE message: LIBLTE_MME_MSG_TYPE_ATTACH_REQUEST
+Received Initial UE message -- Attach Request
+Attach request -- IMSI: 001010123456789
+Attach request -- eNB-UE S1AP Id: 1
+Attach request -- Attach type: 1
+Attach Request -- UE Network Capabilities EEA: 11110000
+Attach Request -- UE Network Capabilities EIA: 01110000
+Attach Request -- MS Network Capabilities Present: false
+PDN Connectivity Request -- EPS Bearer Identity requested: 0
+PDN Connectivity Request -- Procedure Transaction Id: 1
+PDN Connectivity Request -- ESM Information Transfer requested: false
+Downlink NAS: Sending Authentication Request
+UL NAS: Received Authentication Response
+Authentication Response -- IMSI 001010123456789
+UE Authentication Accepted.
+Generating KeNB with UL NAS COUNT: 0
+Downlink NAS: Sending NAS Security Mode Command.
+UL NAS: Received Security Mode Complete
+Security Mode Command Complete -- IMSI: 001010123456789
+Getting subscription information -- QCI 7
+Sending Create Session Request.
+Creating Session Response -- IMSI: 1010123456789
+Creating Session Response -- MME control TEID: 1
+Received GTP-C PDU. Message type: GTPC_MSG_TYPE_CREATE_SESSION_REQUEST
+SPGW: Allocated Ctrl TEID 1
+SPGW: Allocated User TEID 1
+SPGW: Allocate UE IP 172.16.0.2
+Received Create Session Response
+Create Session Response -- SPGW control TEID 1
+Create Session Response -- SPGW S1-U Address: 127.0.1.100
+SPGW Allocated IP 172.16.0.2 to IMSI 001010123456789
+Adding attach accept to Initial Context Setup Request
+Sent Initial Context Setup Request. E-RAB id 5
+Received Initial Context Setup Response
+E-RAB Context Setup. E-RAB id 5
+E-RAB Context -- eNB TEID 0x1; eNB GTP-U Address 127.0.1.1
+UL NAS: Received Attach Complete
+Unpacked Attached Complete Message. IMSI 1010123456789
+Unpacked Activate Default EPS Bearer message. EPS Bearer id 5
+Sending EMM Information
+Received GTP-C PDU. Message type: GTPC_MSG_TYPE_MODIFY_BEARER_REQUEST
+Received UE Context Release Request. MME-UE S1AP Id 1
+There are active E-RABs, send release access bearers request
+Received GTP-C PDU. Message type: GTPC_MSG_TYPE_RELEASE_ACCESS_BEARERS_REQUEST
+Received UE Context Release Complete. MME-UE S1AP Id 1
+UE Context Release Completed.
+Initial UE message: NAS Message Type Unknown
+Received Initial UE message -- Service Request
+Service request -- S-TMSI 0xe7a9ffe0
+Service request -- eNB UE S1AP Id 2
+Service Request -- Short MAC valid
+Service Request -- User is ECM DISCONNECTED
+UE previously assigned IP: 172.16.0.2
+Generating KeNB with UL NAS COUNT: 2
+UE Ctr TEID 0
+Sent Initial Context Setup Request. E-RAB id 5
+Found UE for Downlink Notification
+MME Ctr TEID 0x1, IMSI: 001010123456789
+Received Initial Context Setup Response
+E-RAB Context Setup. E-RAB id 5
+E-RAB Context -- eNB TEID 0x2; eNB GTP-U Address 127.0.1.1
+Initial Context Setup Response triggered from Service Request.
+Sending Modify Bearer Request.
+Received GTP-C PDU. Message type: GTPC_MSG_TYPE_MODIFY_BEARER_REQUEST
+Modify Bearer Request received after Downling Data Notification was sent
+T3413 expired -- Could not page the ue.
+Received GTP-C PDU. Message type: GTPC_MSG_TYPE_DOWNLINK_DATA_NOTIFICATION_FAILURE_INDICATION
+Received UE Context Release Request. MME-UE S1AP Id 2
+There are active E-RABs, send release access bearers request
+Received GTP-C PDU. Message type: GTPC_MSG_TYPE_RELEASE_ACCESS_BEARERS_REQUEST
+Received UE Context Release Complete. MME-UE S1AP Id 2
+UE Context Release Completed.
+
+
+
+srsENB
+-------------------------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ sudo srsenb
+Active RF plugins: libsrsran_rf_zmq.so
+Inactive RF plugins:
+---  Software Radio Systems LTE eNodeB  ---
+
+Couldn't open , trying /home/vagrant/.config/srsran/enb.conf
+Reading configuration file /home/vagrant/.config/srsran/enb.conf...
+Couldn't open sib.conf, trying /home/vagrant/.config/srsran/sib.conf
+Couldn't open rr.conf, trying /home/vagrant/.config/srsran/rr.conf
+Couldn't open rb.conf, trying /home/vagrant/.config/srsran/rb.conf
+
+Built in Release mode using commit ce8a3cae1 on branch master.
+
+Opening 2 channels in RF device=zmq with args=fail_on_disconnect=true,tx_port0=tcp://*:2000,rx_port0=tcp://localhost:2001,tx_port1=tcp://*:2100,rx_port1=tcp://localhost:2101,id=enb,base_srate=23.04e6
+Supported RF device list: zmq file
+CHx base_srate=23.04e6
+CHx id=enb
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+CH0 rx_port=tcp://localhost:2001
+CH0 tx_port=tcp://*:2000
+CH0 fail_on_disconnect=true
+CH1 rx_port=tcp://localhost:2101
+CH1 tx_port=tcp://*:2100
+
+==== eNodeB started ===
+Type <t> to view trace
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Setting frequency: DL=2680.0 Mhz, UL=2560.0 MHz for cc_idx=0 nof_prb=50
+Setting frequency: DL=1842.5 Mhz, DL_SSB=1839.65 Mhz (SSB-ARFCN=367930), UL=1747.5 MHz for cc_idx=1 nof_prb=52
+RACH:  tti=1621, cc=0, pci=1, preamble=17, offset=0, temp_crnti=0x46
+User 0x46 connected
+User 0x46 connected
+User 0x46 connected
+RACH:  slot=2731, cc=0, preamble=0, offset=0, temp_crnti=0x4602
+Disconnecting rnti=0x4602.
+Disconnecting rnti=0x46.
+Disconnecting rnti=0x4601.
+RACH:  tti=2461, cc=0, pci=1, preamble=29, offset=0, temp_crnti=0x47
+User 0x47 connected
+User 0x47 connected
+User 0x47 connected
+RACH:  slot=2731, cc=0, preamble=0, offset=0, temp_crnti=0x4604
+Disconnecting rnti=0x4604.
+Disconnecting rnti=0x47.
+Disconnecting rnti=0x4603.
+
+
+
+srsUE
+-------------------------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ sudo srsue
+Active RF plugins: libsrsran_rf_zmq.so
+Inactive RF plugins:
+Couldn't open , trying /home/vagrant/.config/srsran/ue.conf
+Reading configuration file /home/vagrant/.config/srsran/ue.conf...
+
+Built in Release mode using commit ce8a3cae1 on branch master.
+
+Opening 2 channels in RF device=zmq with args=tx_port0=tcp://*:2001,rx_port0=tcp://localhost:2000,tx_port1=tcp://*:2101,rx_port1=tcp://localhost:2100,id=ue,base_srate=23.04e6
+Supported RF device list: zmq file
+CHx base_srate=23.04e6
+CHx id=ue
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+CH0 rx_port=tcp://localhost:2000
+CH0 tx_port=tcp://*:2001
+CH1 rx_port=tcp://localhost:2100
+CH1 tx_port=tcp://*:2101
+Waiting PHY to initialize ... done!
+Attaching UE...
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+.
+Found Cell:  Mode=FDD, PCI=1, PRB=50, Ports=1, CP=Normal, CFO=-0.2 KHz
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Found PLMN:  Id=00101, TAC=7
+Random Access Transmission: seq=17, tti=1621, ra-rnti=0x2
+RRC Connected
+Random Access Complete.     c-rnti=0x46, ta=0
+Network attach successful. IP: 172.16.0.2
+Software Radio Systems RAN (srsRAN) 15/8/2022 8:43:55 TZ:0
+RRC NR reconfiguration successful.
+Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0xf, tti=2731
+Random Access Complete.     c-rnti=0x4601, ta=0
+Received RRC Connection Release (releaseCause: other)
+RRC IDLE
+Service Request with cause mo-Data.
+Random Access Transmission: seq=29, tti=2461, ra-rnti=0x2
+RRC Connected
+Random Access Complete.     c-rnti=0x47, ta=0
+Service Request successful.
+RRC NR reconfiguration successful.
+Random Access Transmission: prach_occasion=0, preamble_index=0, ra-rnti=0xf, tti=2731
+Random Access Complete.     c-rnti=0x4603, ta=0
+
+
+
+vagrant@oai-gnb-ue-sim:~$ iperf3 -s -i 1
+-----------------------------------------------------------
+Server listening on 5201
+-----------------------------------------------------------
+Accepted connection from 172.16.0.2, port 46500
+[  5] local 172.16.0.1 port 5201 connected to 172.16.0.2 port 46502
+[ ID] Interval           Transfer     Bandwidth
+[  5]   0.00-1.00   sec   499 KBytes  4.09 Mbits/sec
+[  5]   1.00-2.00   sec   701 KBytes  5.75 Mbits/sec
+[  5]   2.00-3.00   sec   577 KBytes  4.72 Mbits/sec
+[  5]   3.00-4.00   sec   700 KBytes  5.74 Mbits/sec
+[  5]   4.00-5.00   sec   843 KBytes  6.90 Mbits/sec
+[  5]   5.00-6.00   sec  1.01 MBytes  8.51 Mbits/sec
+[  5]   6.00-7.00   sec   952 KBytes  7.79 Mbits/sec
+[  5]   7.00-8.00   sec   605 KBytes  4.96 Mbits/sec
+[  5]   8.00-9.00   sec   642 KBytes  5.26 Mbits/sec
+
+
+vagrant@oai-gnb-ue-sim:~$ sudo ip netns exec ue1 iperf3 -c 172.16.0.1 -b 10M -i 1 -t 60
+Connecting to host 172.16.0.1, port 5201
+[  4] local 172.16.0.2 port 46502 connected to 172.16.0.1 port 5201
+[ ID] Interval           Transfer     Bandwidth       Retr  Cwnd
+[  4]   0.00-1.00   sec   916 KBytes  7.51 Mbits/sec    2   35.4 KBytes
+[  4]   1.00-2.00   sec   636 KBytes  5.21 Mbits/sec    0   46.7 KBytes
+[  4]   2.00-3.00   sec   636 KBytes  5.21 Mbits/sec    1   41.0 KBytes
+[  4]   3.00-4.00   sec   636 KBytes  5.21 Mbits/sec    0   48.1 KBytes
+[  4]   4.00-5.00   sec   891 KBytes  7.30 Mbits/sec    0   58.0 KBytes
+[  4]   5.00-6.00   sec  1018 KBytes  8.34 Mbits/sec    0   65.0 KBytes
+[  4]   6.00-7.00   sec  1018 KBytes  8.34 Mbits/sec    0   70.7 KBytes
+[  4]   7.00-8.00   sec   573 KBytes  4.69 Mbits/sec    2   42.4 KBytes
+[  4]   8.00-9.00   sec   636 KBytes  5.21 Mbits/sec    0   49.5 KBytes
+[  4]   9.00-10.00  sec   382 KBytes  3.13 Mbits/sec    1   1.41 KBytes
+[  4]  10.00-11.00  sec   573 KBytes  4.69 Mbits/sec    0   49.5 KBytes
+
