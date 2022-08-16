@@ -67,6 +67,7 @@ cp /home/vagrant/srsRAN/srsenb/sib.conf.example ~/.config/srsran/sib.conf
 cp /home/vagrant/srsRAN/srsenb/rb.conf.example ~/.config/srsran/rb.conf
 cp /home/vagrant/srsRAN/srsenb/sib.conf.mbsfn.example ~/.config/srsran/sib.conf.mbsfn
 cd .config/srsran/
+sudo ip netns add ue1
 
 sudo apt install iperf3
 
