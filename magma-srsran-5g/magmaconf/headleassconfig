@@ -1,0 +1,8 @@
+- sudo sed -i 's/\"enable5gFeatures\": false/\"enable5gFeatures\": true/g' /etc/magma/gateway.mconfig
+- cat /etc/magma//gateway.mconfig | grep mcc
+      "mcc": "724",
+- cat /etc/magma//gateway.mconfig | grep mnc
+      "mnc": "99",
+
+- subscriber_cli.py  add --lte-auth-key 465B5CE8B199B49FAA5F0A2EE238A6BC --lte-auth-opc E8ED289DEBA952E4283B54E88E6183CA IMSI724990000000008
+- subscriber_cli.py update --lte-auth-key 465B5CE8B199B49FAA5F0A2EE238A6BC --lte-auth-opc E8ED289DEBA952E4283B54E88E6183CA --apn-config internet,9,15,1,1,1000,2000,1,,,,  IMSI724990000000008

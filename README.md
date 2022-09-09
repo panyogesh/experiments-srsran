@@ -6,3 +6,5 @@ This is for the experiments done using [srs-ran](https://github.com/srsRAN/srsRA
 1. magma-srsran-4g : Shows configuration options for verifiying magma with srs-ran
 
 2. srs-nsa : srs nsa feature only as described in srs
+
+3. magma-srsran-5g : Shows configuration options for verifying magma srsran 5g 
