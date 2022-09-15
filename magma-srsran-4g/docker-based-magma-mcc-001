@@ -1,0 +1,26 @@
+cp ~/srsRAN/srsepc/epc.conf.example ~/.config/srsran/epc.conf
+cp ~/srsRAN/srsepc/mbms.conf.example ~/.config/srsran/mbms.conf
+cp ~/srsRAN/srsepc/user_db.csv.example ~/.config/srsran/user_db.csv
+cp ~/srsRAN/srsue/ue.conf.example ~/.config/srsran/ue.conf
+cp ~/srsRAN/srsenb/sib.conf.example ~/.config/srsran/sib.conf
+cp ~/srsRAN/srsenb/rb.conf.example ~/.config/srsran/rb.conf
+cp ~/srsRAN/srsenb/rr.conf.example ~/.config/srsran/rr.conf
+cp ~/srsRAN/srsenb/sib.conf.mbsfn.example ~/.config/srsran/sib.conf.mbsfn
+cp ~/srsRAN/srsenb/enb.conf.example ~/.config/srsran/enb.conf
+
+
+
+mode = soft
+algo = milenage
+opc  = 63BFA50EE6523365FF14C1F45F88737D
+k    = 00112233445566778899aabbccddeeff
+imsi = 001010123456780
+imei = 353490069873319
+
+
+
+subscriber_cli.py  add --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D IMSI001010123456780
+subscriber_cli.py update --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D --apn-config internet,5,15,1,1,1000,2000,0,,,,  IMSI001010123456780
+
+sudo docker exec magmad  subscriber_cli.py  add --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D IMSI001010123456780
+sudo docker exec magmad subscriber_cli.py update --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D --apn-config internet,5,15,1,1,1000,2000,0,,,,  IMSI001010123456780
