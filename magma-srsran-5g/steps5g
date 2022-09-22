@@ -2,6 +2,7 @@ Bring up magma 5g
        sudo service magma@magmad start
 
 Bring up srsran
+   - sudo ip netns add ue1 
    - Launch using 
         sudo srsenb ./enb.conf
         sudo srsue ./ue.conf
