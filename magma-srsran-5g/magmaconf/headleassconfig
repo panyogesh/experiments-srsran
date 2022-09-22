@@ -4,5 +4,12 @@
 - cat /etc/magma//gateway.mconfig | grep mnc
       "mnc": "99",
 
+Debian Based
+-----------------
 - subscriber_cli.py  add --lte-auth-key 465B5CE8B199B49FAA5F0A2EE238A6BC --lte-auth-opc E8ED289DEBA952E4283B54E88E6183CA IMSI724990000000008
 - subscriber_cli.py update --lte-auth-key 465B5CE8B199B49FAA5F0A2EE238A6BC --lte-auth-opc E8ED289DEBA952E4283B54E88E6183CA --apn-config internet,9,15,1,1,1000,2000,1,,,,  IMSI724990000000008
+
+Docker Based
+-----------------
+sudo docker exec magmad  subscriber_cli.py  add --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D IMSI001010123456780
+sudo docker exec magmad subscriber_cli.py update --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D --apn-config internet,9,15,1,1,1000,2000,0,,,,  IMSI001010123456780
