@@ -1,49 +1,168 @@
-vagrant@destro-magma:~$ sudo ovs-vsctl show
-96d24254-7987-4149-965c-518d9e3365d8
+Pre-Requisites
+=========================================================================================
+subscriber_cli.py  add --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D IMSI001010123456780
+subscriber_cli.py update --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D --apn-config internet,5,15,1,1,1000,2000,0,,,,  IMSI001010123456780
+
+
+1.
+Check for the services
+==========================================================================================
+vagrant@distro-magma:~$ service magma@mme status
+● magma@mme.service - Magma OAI MME service
+     Loaded: loaded (/etc/systemd/system/magma@mme.service; disabled; vendor preset: enabled)
+     Active: active (running) since Fri 2022-10-14 07:40:44 UTC; 10s ago
+    Process: 3993 ExecStartPre=/usr/bin/env python3 /usr/local/bin/generate_oai_config.py (code=ex>
+    Process: 4010 ExecStartPre=/usr/bin/env python3 /usr/local/bin/config_stateless_agw.py reset_s>
+   Main PID: 4018 (mme)
+      Tasks: 33 (limit: 19168)
+     Memory: 50.9M (min: 512.0M limit: 2.0G)
+     CGroup: /system.slice/system-magma.slice/magma@mme.service
+             └─4018 /usr/local/bin/mme -c /var/opt/magma/tmp/mme.conf -s /var/opt/magma/tmp/spgw.c>
+vagrant@distro-magma:~$
+vagrant@distro-magma:~$
+
+
+2.
+Check for the ports
+==========================================================================================
+vagrant@distro-magma:~$ cat /proc/net/sctp/eps
+ ENDPT     SOCK   STY SST HBKT LPORT   UID INODE LADDRS
+       0        0 2   10  15   38412     0 51108 192.168.62.176
+       0        0 2   10  63   36412     0 51107 192.168.62.176
+vagrant@distro-magma:~$
+
+
+3.
+Check for the version
+==========================================================================================
+
+magma : 1.8.0-1665630137-39976d41
+
+
+4. 
+Check the installed OVS
+==========================================================================================
+vagrant@distro-magma:~$ sudo ovs-vsctl show
+b72e1b0d-72b1-4fe5-8fda-24d1cdd66eae
     Manager "ptcp:6640"
     Bridge uplink_br0
         Port dhcp0
             Interface dhcp0
                 type: internal
-        Port uplink_br0
-            Interface uplink_br0
-                type: internal
         Port patch-agw
             Interface patch-agw
                 type: patch
                 options: {peer=patch-up}
+        Port uplink_br0
+            Interface uplink_br0
+                type: internal
     Bridge gtp_br0
-        Controller "tcp:127.0.0.1:6633"
-            is_connected: true
         Controller "tcp:127.0.0.1:6654"
             is_connected: true
+        Controller "tcp:127.0.0.1:6633"
+            is_connected: true
         fail_mode: secure
-        Port mtr0
-            Interface mtr0
-                type: internal
-        Port gtp0
-            Interface gtp0
-                type: gtpu
-                options: {key=flow, remote_ip=flow}
-        Port patch-up
-            Interface patch-up
-                type: patch
-                options: {peer=patch-agw}
         Port proxy_port
             Interface proxy_port
         Port ipfix0
             Interface ipfix0
                 type: internal
-        Port li_port
-            Interface li_port
-                type: internal
+        Port gtp0
+            Interface gtp0
+                type: gtpu
+                options: {key=flow, remote_ip=flow}
         Port gtp_br0
             Interface gtp_br0
                 type: internal
-        Port g_9a3ca8c0
-            Interface g_9a3ca8c0
-                type: gtpu
-                options: {csum="false", key=flow, remote_ip="192.168.60.154"}
-                bfd_status: {diagnostic="Neighbor Signaled Session Down", flap_count="0", forwarding="true", remote_diagnostic="No Diagnostic", remote_state=up, state=up}
+        Port mtr0
+            Interface mtr0
+                type: internal
+        Port li_port
+            Interface li_port
+                type: internal
+        Port patch-up
+            Interface patch-up
+                type: patch
+                options: {peer=patch-agw}
     ovs_version: "2.15.4"
-vagrant@destro-magma:~$
+vagrant@distro-magma:~$
+
+
+
+5. 
+Check the installed Subscribers
+==========================================================================================
+
+subscriber_cli.py  add --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D IMSI001010123456780
+subscriber_cli.py update --lte-auth-key 00112233445566778899aabbccddeeff --lte-auth-opc 63BFA50EE6523365FF14C1F45F88737D --apn-config internet,5,15,1,1,1000,2000,0,,,,  IMSI001010123456780
+
+vagrant@distro-magma:~$ subscriber_cli.py list
+IMSI001010123456780
+vagrant@distro-magma:~$
+vagrant@distro-magma:~$
+vagrant@distro-magma:~$ subscriber_cli.py get IMSI001010123456780
+sid {
+  id: "001010123456780"
+}
+gsm {
+}
+lte {
+  state: ACTIVE
+  auth_key: "\000\021\"3DUfw\210\231\252\273\314\335\356\377"
+  auth_opc: "c\277\245\016\346R3e\377\024\301\364_\210s}"
+}
+state {
+  lte_auth_next_seq: 1
+}
+non_3gpp {
+  ambr {
+    max_bandwidth_ul: 2000000000
+    max_bandwidth_dl: 4000000000
+  }
+  apn_config {
+    service_selection: "internet"
+    qos_profile {
+      class_id: 5
+      priority_level: 15
+      preemption_capability: true
+      preemption_vulnerability: true
+    }
+    ambr {
+      max_bandwidth_ul: 1000
+      max_bandwidth_dl: 2000
+    }
+  }
+}
+sub_network {
+}
+
+vagrant@distro-magma:~$
+
+
+
+
+6.
+After sending the packets from SRS-RAN check the counters
+==========================================================================================
+vagrant@distro-magma:~$ sudo ovs-ofctl dump-flows gtp_br0 table=0
+ cookie=0x0, duration=3483.300s, table=0, n_packets=8, n_bytes=560, priority=10,in_port=ipfix0 actions=resubmit(,201)
+ cookie=0x0, duration=3479.093s, table=0, n_packets=0, n_bytes=0, priority=0,in_port=ipfix0 actions=resubmit(,201)
+ cookie=0x0, duration=3479.093s, table=0, n_packets=8, n_bytes=560, priority=0,in_port="li_port" actions=resubmit(,202)
+ cookie=0x0, duration=26.389s, table=0, n_packets=14, n_bytes=1372, priority=10,ip,in_port=LOCAL,nw_dst=192.168.128.19 actions=load:0x2->NXM_NX_TUN_ID[],load:0xc0a83e9a->NXM_NX_TUN_IPV4_DST[],load:0x3->NXM_NX_REG8[],load:0xb->NXM_NX_REG9[],mod_dl_dst:ff:ff:ff:ff:ff:ff,load:0x75980660865->OXM_OF_METADATA[],resubmit(,1)
+ cookie=0x0, duration=26.389s, table=0, n_packets=0, n_bytes=0, priority=10,ip,in_port=mtr0,nw_dst=192.168.128.19 actions=load:0x2->NXM_NX_TUN_ID[],load:0xc0a83e9a->NXM_NX_TUN_IPV4_DST[],load:0x3->NXM_NX_REG8[],load:0xb->NXM_NX_REG9[],mod_dl_dst:ff:ff:ff:ff:ff:ff,load:0x75980660865->OXM_OF_METADATA[],resubmit(,1)
+ cookie=0x0, duration=26.389s, table=0, n_packets=1, n_bytes=42, priority=10,arp,in_port=LOCAL,arp_tpa=192.168.128.19 actions=load:0x75980660865->OXM_OF_METADATA[],resubmit(,1)
+ cookie=0x0, duration=26.389s, table=0, n_packets=0, n_bytes=0, priority=10,arp,in_port=mtr0,arp_tpa=192.168.128.19 actions=load:0x75980660865->OXM_OF_METADATA[],resubmit(,1)
+ cookie=0x0, duration=26.389s, table=0, n_packets=14, n_bytes=1176, priority=10,tun_id=0xb,in_port="g_9a3ea8c0" actions=mod_dl_src:02:00:00:00:00:01,mod_dl_dst:ff:ff:ff:ff:ff:ff,load:0x2->NXM_NX_REG9[],load:0x75980660865->OXM_OF_METADATA[],resubmit(,1)
+ cookie=0x0, duration=31.192s, table=0, n_packets=0, n_bytes=0, priority=5,ip,nw_dst=192.168.128.19 actions=CONTROLLER:65535
+ cookie=0x0, duration=3479.093s, table=0, n_packets=35, n_bytes=2574, priority=0 actions=resubmit(,1)
+vagrant@distro-magma:~$
+
+
+grant@distro-magma:~$ sudo ovs-ofctl dump-flows gtp_br0 table=20
+ cookie=0x0, duration=3523.067s, table=20, n_packets=0, n_bytes=0, priority=12,reg12=0x1 actions=set_field:e6:8f:a2:80:80:80->eth_dst,output:"proxy_port"
+ cookie=0x0, duration=3523.067s, table=20, n_packets=29, n_bytes=2436, priority=10,reg1=0x1 actions=set_field:12:46:01:70:2c:4b->eth_dst,LOCAL
+ cookie=0x0, duration=3523.067s, table=20, n_packets=29, n_bytes=2842, priority=0,ip,reg1=0x10,vlan_tci=0x0000/0x1000 actions=output:NXM_NX_REG8[]
+ cookie=0x0, duration=3523.067s, table=20, n_packets=0, n_bytes=0, priority=0,ip,reg1=0x10,vlan_tci=0x1000/0x1000 actions=strip_vlan,output:NXM_NX_REG8[]
+ cookie=0x0, duration=3523.067s, table=20, n_packets=0, n_bytes=0, priority=0,ipv6,reg1=0x10,vlan_tci=0x0000/0x1000 actions=output:NXM_NX_REG8[]
+ cookie=0x0, duration=3523.067s, table=20, n_packets=0, n_bytes=0, priority=0,ipv6,reg1=0x10,vlan_tci=0x1000/0x1000 actions=strip_vlan,output:NXM_NX_REG8[]
+vagrant@distro-magma:~$
