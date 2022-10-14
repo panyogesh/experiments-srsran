@@ -1,0 +1,260 @@
+Pre-Requisites
+============================================================
+
+Pre-Req-1
+Create Configuration Directory
+------------------------------------------------------------
+mkdir .config
+mkdir .config/srsran
+cp ~/srsRAN/srsepc/epc.conf.example ~/.config/srsran/epc.conf
+cp ~/srsRAN/srsepc/mbms.conf.example ~/.config/srsran/mbms.conf
+cp ~/srsRAN/srsepc/user_db.csv.example ~/.config/srsran/user_db.csv
+cp ~/srsRAN/srsue/ue.conf.example ~/.config/srsran/ue.conf
+cp ~/srsRAN/srsenb/sib.conf.example ~/.config/srsran/sib.conf
+cp ~/srsRAN/srsenb/rb.conf.example ~/.config/srsran/rb.conf
+cp ~/srsRAN/srsenb/rr.conf.example ~/.config/srsran/rr.conf
+cp ~/srsRAN/srsenb/sib.conf.mbsfn.example ~/.config/srsran/sib.conf.mbsfn
+cp ~/srsRAN/srsenb/enb.conf.example ~/.config/srsran/enb.conf
+
+
+Pre-Req-2
+Update the configuration
+------------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ diff ~/srsRAN/srsue/ue.conf.example ~/.config/srsran/ue.conf
+45,46c45,46
+< #device_name = zmq
+< #device_args = tx_port=tcp://*:2001,rx_port=tcp://localhost:2000,id=ue,base_srate=23.04e6
+---
+> device_name = zmq
+> device_args = tx_port=tcp://*:2001,rx_port=tcp://localhost:2000,id=ue,base_srate=23.04e6
+183,184c183,184
+< #apn = internetinternet
+< #apn_protocol = ipv4
+---
+> apn = internet
+> apn_protocol = ipv4
+199c199
+< #netns =
+---
+> netns = ue1
+vagrant@oai-gnb-ue-sim:~$
+
+
+vagrant@oai-gnb-ue-sim:~$ diff ~/srsRAN/srsenb/rr.conf.example ~/.config/srsran/rr.conf
+58c58
+<     tac = 0x0007;
+---
+>     tac = 0x0001;
+117c117
+< );
+\ No newline at end of file
+---
+> );
+vagrant@oai-gnb-ue-sim:~$
+
+
+vagrant@oai-gnb-ue-sim:~$ diff ~/srsRAN/srsenb/rb.conf.example ~/.config/srsran/rb.conf
+43c43
+<   qci = 7;
+---
+>   qci = 5;
+vagrant@oai-gnb-ue-sim:~$
+
+
+
+vagrant@oai-gnb-ue-sim:~$ diff ~/srsRAN/srsenb/enb.conf.example ~/.config/srsran/enb.conf
+25,27c25,27
+< mme_addr = 127.0.1.100
+< gtp_bind_addr = 127.0.1.1
+< s1c_bind_addr = 127.0.1.1
+---
+> mme_addr = 192.168.62.176
+> gtp_bind_addr = 192.168.62.154
+> s1c_bind_addr = 192.168.62.154
+83,84c83,84
+< #device_name = zmq
+< #device_args = fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=23.04e6
+---
+> device_name = zmq
+> device_args = fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=23.04e6
+vagrant@oai-gnb-ue-sim:~$
+
+
+Pre-Req-3
+------------------------------------------------------------
+sudo apt install net-tools
+
+
+Pre-Req-4
+Add netns <Name> Lets say ue1 & making operational 
+------------------------------------------------------------
+sudo ip netns add ue1
+sudo ip netns exec ue1 ifconfig lo up
+
+Pre-Req-5
+Make sure same namespace is configured on ue.conf
+-----------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ cat .config/srsran/ue.conf | grep ue1
+netns = ue1
+vagrant@oai-gnb-ue-sim:~$
+
+
+
+1.
+Launch the process
+===========================================================
+
+1.1
+Launch the srsenb
+-----------------------------------------------------------
+vagrant@oai-gnb-ue-sim:~$ srsenb
+Active RF plugins: libsrsran_rf_zmq.so
+Inactive RF plugins:
+---  Software Radio Systems LTE eNodeB  ---
+
+Couldn't open , trying /home/vagrant/.config/srsran/enb.conf
+Reading configuration file /home/vagrant/.config/srsran/enb.conf...
+Couldn't open sib.conf, trying /home/vagrant/.config/srsran/sib.conf
+Couldn't open rr.conf, trying /home/vagrant/.config/srsran/rr.conf
+Couldn't open rb.conf, trying /home/vagrant/.config/srsran/rb.conf
+Failed to `mlockall`: {}
+Built in Release mode using commit ce8a3cae1 on branch master.
+
+Warning: Failed to create thread with real-time priority. Creating it with normal priority: Success
+Opening 1 channels in RF device=zmq with args=fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=23.04e6
+Supported RF device list: zmq file
+CHx base_srate=23.04e6
+CHx id=enb
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+CH0 rx_port=tcp://localhost:2001
+CH0 tx_port=tcp://*:2000
+CH0 fail_on_disconnect=true
+Warning: Failed to create thread with real-time priority. Creating it with normal priority: Invalid argument
+Warning: Failed to create thread with real-time priority. Creating it with normal priority: Invalid argument
+Warning: Failed to create thread with real-time priority. Creating it with normal priority: Invalid argument
+Warning: Failed to create thread with real-time priority. Creating it with normal priority: Invalid argument
+
+==== eNodeB started ===
+Type <t> to view trace
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Setting frequency: DL=2680.0 Mhz, UL=2560.0 MHz for cc_idx=0 nof_prb=50
+
+
+
+1.2
+Launch the srsue
+-----------------------------------------------------------
+agrant@oai-gnb-ue-sim:~$ sudo srsue  /home/vagrant/.config/srsran/ue.conf
+Active RF plugins: libsrsran_rf_zmq.so
+Inactive RF plugins:
+Reading configuration file /home/vagrant/.config/srsran/ue.conf...
+
+Built in Release mode using commit ce8a3cae1 on branch master.
+
+Opening 1 channels in RF device=zmq with args=tx_port=tcp://*:2001,rx_port=tcp://localhost:2000,id=ue,base_srate=23.04e6
+Supported RF device list: zmq file
+CHx base_srate=23.04e6
+CHx id=ue
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+CH0 rx_port=tcp://localhost:2000
+CH0 tx_port=tcp://*:2001
+Waiting PHY to initialize ... done!
+Attaching UE...
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+Current sample rate is 1.92 MHz with a base rate of 23.04 MHz (x12 decimation)
+.
+Found Cell:  Mode=FDD, PCI=1, PRB=50, Ports=1, CP=Normal, CFO=-0.2 KHz
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Found PLMN:  Id=00101, TAC=1
+Random Access Transmission: seq=45, tti=341, ra-rnti=0x2
+RRC Connected
+Random Access Complete.     c-rnti=0x46, ta=0
+Network attach successful. IP: 192.168.128.19
+E
+
+
+
+2.
+Check for the created interface
+===========================================================
+
+2.1
+Validate the interface
+-----------------------------------------------------------
+7: tun_srsue: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+    link/none
+    inet 192.168.128.12/24 scope global tun_srsue
+       valid_lft forever preferred_lft forever
+vagrant@oai-gnb-ue-sim:~$
+
+
+vagrant@oai-gnb-ue-sim:~$ sudo ip netns exec ue1 /bin/bash
+
+root@oai-gnb-ue-sim:/home/vagrant# ifconfig
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+tun_srsue: flags=4305<UP,POINTOPOINT,RUNNING,NOARP,MULTICAST>  mtu 1500
+        inet 192.168.128.19  netmask 255.255.255.0  destination 192.168.128.19
+        unspec 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00  txqueuelen 500  (UNSPEC)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+root@oai-gnb-ue-sim:/home/vagrant#
+
+
+root@oai-gnb-ue-sim:/home/vagrant# ip route add 8.8.8.8/32 dev tun_srsue
+
+
+3.
+Verification Logs
+===========================================================
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Current sample rate is 11.52 MHz with a base rate of 23.04 MHz (x2 decimation)
+Found PLMN:  Id=00101, TAC=1
+Random Access Transmission: seq=7, tti=341, ra-rnti=0x2
+RRC Connected
+Random Access Complete.     c-rnti=0x46, ta=0
+Network attach successful. IP: 192.168.128.19
+E
+Received RRC Connection Release (releaseCause: other)
+RRC IDLE
+Service Request with cause mo-Data.
+Random Access Transmission: seq=17, tti=3701, ra-rnti=0x2
+RRC Connected
+Random Access Complete.     c-rnti=0x47, ta=0
+Service Request successful.
+Received RRC Connection Release (releaseCause: other)
+RRC IDLE
+
+
+root@oai-gnb-ue-sim:/home/vagrant# ping 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=61 time=67.7 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=61 time=83.9 ms
+64 bytes from 8.8.8.8: icmp_seq=4 ttl=61 time=81.6 ms
+64 bytes from 8.8.8.8: icmp_seq=5 ttl=61 time=61.1 ms
+64 bytes from 8.8.8.8: icmp_seq=6 ttl=61 time=86.3 ms
+64 bytes from 8.8.8.8: icmp_seq=7 ttl=61 time=71.6 ms
+64 bytes from 8.8.8.8: icmp_seq=8 ttl=61 time=73.4 ms
+64 bytes from 8.8.8.8: icmp_seq=9 ttl=61 time=74.5 ms
+64 bytes from 8.8.8.8: icmp_seq=10 ttl=61 time=69.0 ms
+64 bytes from 8.8.8.8: icmp_seq=11 ttl=61 time=75.5 ms
+64 bytes from 8.8.8.8: icmp_seq=12 ttl=61 time=65.5 ms
+64 bytes from 8.8.8.8: icmp_seq=13 ttl=61 time=81.8 ms
+64 bytes from 8.8.8.8: icmp_seq=14 ttl=61 time=69.5 ms
+64 bytes from 8.8.8.8: icmp_seq=15 ttl=61 time=63.6 ms
+^C
+--- 8.8.8.8 ping statistics ---
+15 packets transmitted, 14 received, 6.66667% packet loss, time 14013ms
+rtt min/avg/max/mdev = 61.148/73.209/86.285/7.558 ms
