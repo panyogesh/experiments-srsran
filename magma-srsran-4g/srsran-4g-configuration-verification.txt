@@ -1,5 +1,33 @@
+SRS-RAN INSTALLATIONS
+
+vagrant@simtesttool:~$ cat Install-SRS-RAN.sh
+echo " === UPDATE === "
+sudo apt-get update -y
+
+echo " === UPGRADE === "
+sudo apt-get upgrade -y
+
+echo " === PACKAGE-INSTALL === "
+sudo apt-get -y install build-essential cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev libzmq3-dev
+
+echo " === CHECK OUT SRS-RAN === "
+git clone https://github.com/srsRAN/srsRAN.git
+cd srsRAN/
+
+echo " === BUILD SRS-RAN === "
+mkdir build
+cd build/
+cmake ../
+
+echo " === BUILD SRS-RAN CONTD. === "
+make
+sudo make install
+sudo ldconfig
+
+
 Pre-Requisites
 ============================================================
+
 
 Pre-Req-1
 Create Configuration Directory
